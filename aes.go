@@ -16,15 +16,22 @@ import (
 var cipherKey []byte
 
 func init() {
-	cipherKeyString := os.Getenv("CHIPHER_KEY")
+	cipherKeyString := os.Getenv("CIPHER_KEY") // Corrected the environment variable name
 	if cipherKeyString == "" {
-		cipherKeyString = string(newKey())
-		log.Println("Generated a new cipher key")
-		return
+		log.Println("CIPHER_KEY environment variable is not set. Generating a new key.")
+		cipherKey = newKey()
+	} else {
+		// Assuming the key is base64 encoded
+		decodedKey, err := base64.StdEncoding.DecodeString(cipherKeyString)
+		if err != nil || (len(decodedKey) != 16 && len(decodedKey) != 24 && len(decodedKey) != 32) {
+			log.Fatalf("Invalid CIPHER_KEY provided. Please ensure it is base64 encoded and 16, 24, or 32 bytes long after decoding.")
+		}
+		cipherKey = decodedKey
 	}
 
-	cipherKey = []byte(cipherKeyString)
+	log.Printf("Using cipher key of size %d bytes.\n", len(cipherKey))
 }
+
 func newKey() []byte {
 	// Generate a new random key
 	key := make([]byte, 32) // 32 bytes for AES-256
